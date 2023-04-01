@@ -1,0 +1,88 @@
+@import 'config';
+
+/** Buttons */
+[class|="btn"] {
+  @apply rounded-md shadow-sm;
+
+  &:not(.btn-group) {
+    @apply px-3 py-2 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
+  }
+
+  vertical-align: text-top;
+
+  &[class*="-primary"] {
+    @apply bg-indigo-600 text-white;
+
+    &:not([class*="-fake"]) {
+      @apply hover:bg-indigo-500 focus-visible:outline-indigo-600;
+    }
+  }
+
+  &[class*="-secondary"] {
+    @apply bg-white text-gray-900 ring-gray-300;
+
+    &:not([class*="-fake"]) {
+      @apply hover:bg-gray-50;
+    }
+  }
+
+  &[class*="-warn"] {
+    @apply bg-orange-500 text-white ring-orange-200;
+
+    &:not([class*="-fake"]) {
+      @apply hover:bg-orange-400 focus-visible:outline-orange-500;
+    }
+  }
+
+  &[class*="-danger"] {
+    @apply bg-red-600 text-white ring-red-200;
+
+    &:not([class*="-fake"]) {
+      @apply hover:bg-red-500 focus-visible:outline-red-600;
+    }
+  }
+
+  &[class*="-xs"] {
+    @apply px-1 pt-0 pb-0.5 text-xs;
+  }
+
+  &[class*="-block"] {
+    @apply w-full;
+  }
+
+  &[class*="-fake"] {
+    @apply focus-visible:outline-inherit;
+  }
+
+  &.with-icon {
+    @apply inline-flex items-center justify-center gap-x-1.5;
+
+    > svg {
+      height: 1.5em;
+    }
+  }
+}
+
+.btn-group {
+  @apply isolate inline-flex rounded-md shadow-sm;
+
+  [class|="btn"] {
+    @apply relative inline-flex items-center ring-inset focus:z-10;
+
+    &:first-child {
+      @apply rounded-l-md rounded-r-none;
+    }
+
+    &:not(:first-child) {
+      @apply -ml-px rounded-l-none;
+    }
+
+    &:last-child {
+      @apply rounded-r-md;
+    }
+  }
+}
+
+.text-link {
+  @apply underline underline-offset-2;
+}
