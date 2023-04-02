@@ -38,12 +38,10 @@
     vertical-align: top;
   }
 
-  position: relative;
   z-index: 10;
 
-  background-color: $sidebar-surface-color;
-  color: $sidebar-text-color;
-  font-weight: 600;
+  background-color: $surface-color;
+  color: $surface-text-color;
 
   .sidebar-nav {
     height: 100%;
@@ -71,11 +69,11 @@
       transition-property: height, padding;
 
       &.active, &:hover {
-        color: lighten($sidebar-text-color, 30%);
+        color: lighten($surface-text-color, 30%);
       }
       &.active {
         $stripe-width: 2px;
-        border-left: $stripe-width solid lighten($sidebar-text-color, 30%);
+        border-left: $stripe-width solid lighten($surface-text-color, 30%);
         padding-left: calc($base-padding - $stripe-width);
       }
 
@@ -91,14 +89,14 @@
     width: $sidebar-drawer-width;
     height: 100%;
     resize: horizontal;
-    overflow-x: hidden;
+    overflow-y: auto;
 
     display: inline-flex;
     flex-direction: column;
     align-content: stretch;
 
-    background-color: $sidebar-drawer-surface-color;
-    color: $sidebar-drawer-text-color;
+    background-color: $background-color-elevated;
+    color: $text-color-elevated;
 
     &:not(.open) {
       display: none;

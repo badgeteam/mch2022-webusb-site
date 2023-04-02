@@ -1,12 +1,15 @@
 <template>
   <div class="editor flex flex-col">
+
     <div class="editor-tabs w-full h-12 flex" v-if="editor">
-      <div class="editor-tab px-4 py-3" :active="tabName == activeTab"
-        v-for="(tabName, i) in tabs" @click="() => focusTab(i)">
-        {{ tabName }}
-        <!-- <button class="w-4 h-4 mr-2 text-red-500 retry" @click="() => requestUpdate()">
-          <ArrowPathRoundedSquareIcon/>
-        </button> -->
+      <div class="editor-tab px-4 py-3" v-for="(tab, i) in tabs"
+        :active="i == activeTabIndex ? '' : null"
+        @click="() => focusTab(i)"
+      >
+        {{ tab.name }}
+        <button class="close w-4 h-4 ml-1 leading-tight rounded-sm text-red-500" @click="() => closeTab(i)">
+          <XMarkIcon/>
+        </button>
       </div>
     </div>
 
@@ -17,6 +20,8 @@
 </template>
 
 <script lang="ts" setup>
+import { markRaw } from 'vue';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import loader, { Monaco } from '@monaco-editor/loader';
 import { editor, editor as Editor } from 'monaco-editor';
 const { $eventBus, $BadgeAPI } = useNuxtApp();
@@ -26,9 +31,14 @@ const loading = ref(true);
 let monaco: Monaco;
 let editor: Editor.IStandaloneCodeEditor;
 
-const tabs: string[] = reactive([]);
-const models: editor.ITextModel[] = [];
-const activeTab: Ref<string | null> = ref(null);
+type Tab = {
+  name: string,
+  model: editor.ITextModel,
+  savedVersionId: number,
+  hasUnsavedEdits: boolean,
+}
+const tabs: Tab[] = reactive([]);
+const activeTabIndex: Ref<number | null> = ref(null);
 
 onMounted(() => {
   loader.init().then(_monaco => {
@@ -53,7 +63,6 @@ $eventBus.on('file:open', async (path) => {
 });
 
 function openFile(path: string, content: string) {
-  // editor.getModel()?.setValue(content);
   let name = path.split('/').pop()!;
   let ext = name.split('.').pop();
 
@@ -63,15 +72,28 @@ function openFile(path: string, content: string) {
   let model: Editor.ITextModel;
   model = monaco.editor.createModel(content, lang ?? ext);
 
-  tabs.push(name);
-  models.push(model);
-  editor.setModel(model);
-  activeTab.value = name;
+  focusTab(tabs.push({
+    name, model: markRaw(model),
+    savedVersionId: model.getAlternativeVersionId(),
+    get hasUnsavedEdits() { return model.getAlternativeVersionId() == this.savedVersionId },
+  }) - 1);
+}
+
+function closeTab(index: number) {
+  if (
+    tabs[index].hasUnsavedEdits
+    && !confirm('This file has unsaved changes, are you sure?')
+  ) return;
+
+  tabs[index].model.dispose();
+  tabs.splice(index, 1);
+
+  if (activeTabIndex.value == tabs.length) activeTabIndex.value--;
 }
 
 function focusTab(index: number) {
-  editor.setModel(models[index]);
-  activeTab.value = tabs[index];
+  editor.setModel(tabs[index].model);
+  activeTabIndex.value = index;
 }
 
 const extToLang = {
@@ -87,18 +109,26 @@ const extToLang = {
 .editor-tabs {
   @apply select-none;
 
-  background-color: $sidebar-drawer-surface-color;
-  color: $sidebar-drawer-text-color;
+  background-color: $background-color-elevated;
+  color: $text-color-elevated;
 
   .editor-tab {
     @apply cursor-pointer;
+    @apply flex items-center;
 
-    background-color: $sidebar-surface-color;
-    color: $sidebar-text-color;
+    color: $text-color;
+
+    &:hover {
+      background-color: lighten($background-color-elevated, 2%);
+    }
 
     &[active] {
-      background-color: $body-background-color;
-      color: $body-text-color;
+      background-color: #1E1E1E;  // match editor background color
+      color: $text-color-elevated;
+    }
+
+    .close:hover {
+      background-color: lighten($surface-color, 2%);
     }
   }
 }

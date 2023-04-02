@@ -279,10 +279,10 @@
     "@babel/helper-validator-identifier" "^7.19.1"
     to-fast-properties "^2.0.0"
 
-"@badge.team/badge-webusb@^1.1.0-RC0":
-  version "1.1.0-RC0"
-  resolved "https://registry.yarnpkg.com/@badge.team/badge-webusb/-/badge-webusb-1.1.0-RC0.tgz#bf452aa853c03d42135d71e9bcab3e719f237981"
-  integrity sha512-jnp7ME0BHJPjEVdc3aGKwaRqnJ0DIdOzjvx+VdiZgxVuw0S8/MrHoHo1AywdkUp6Wwz69ZbBWMm3tVWqVKj28g==
+"@badge.team/badge-webusb@^1.1.0":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@badge.team/badge-webusb/-/badge-webusb-1.1.1.tgz#1803c6b86178bb18f4fbcbbfae3dca1b6250b071"
+  integrity sha512-/XJUeoIQxnPIXfbYpFF4r6/NO90zN3PpsGAJ0okkrEKTGYS/GefxQRbBQpEtg/b19r8WcKfehyQP9H3f57fAgQ==
   dependencies:
     "@types/w3c-web-usb" "^1.0.6"
     fancy-error "^1.0.0"

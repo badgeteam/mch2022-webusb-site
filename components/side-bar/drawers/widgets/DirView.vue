@@ -1,11 +1,15 @@
 <template>
   <details class="dir-view" @toggle="onToggle">
 
-    <summary :class="{ 'error': loadError }" tabindex="0">
+    <summary :class="{ 'error': loadError }" tabindex="0"
+      @contextmenu.prevent="openContextMenu"
+    >
       <span class="name">{{ props.displayName ?? props.dirNode.name }}</span>
 
       <Loading v-if="loading" :size="4" class="mr-1.5"/>
-      <button v-if="loadError" class="w-4 h-4 mr-2 text-red-500 retry" @click="() => requestUpdate()">
+      <button v-if="loadError" @click="() => requestUpdate()"
+        class="w-4 h-4 mr-2 text-red-500 retry"
+      >
         <ArrowPathRoundedSquareIcon/>
       </button>
     </summary>
@@ -14,9 +18,20 @@
       @loadDirRequest="(dir, cb) => emit('loadDirRequest', dir, cb)"
     />
 
-    <li v-for="file in files" tabindex="0" @dblclick="() => $eventBus.emit('file:open', file.path)">
-      <span class="name">{{ file.name }}</span></li>
+    <li v-for="file in files" tabindex="0"
+      @contextmenu.prevent="openContextMenu"
+      @dblclick="() => $eventBus.emit('file:open', file.path)"
+    >
+      <span class="name">{{ file.name }}</span>
+    </li>
   </details>
+
+  <ContextMenu
+    v-if="contextMenu"
+    :items="contextMenu.items"
+    :origin="contextMenu.origin"
+    @done="() => contextMenu = null"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -63,6 +78,16 @@ function requestUpdate() {
     });
   }
 }
+
+const contextMenu: Ref<{
+  items: { text: string, callback: () => void }[][],
+  origin: {x: number, y: number}
+} | null> = ref(null);
+
+function openContextMenu(event: PointerEvent | MouseEvent) {
+  /* @ts-ignore */
+  console.debug('x,y:', event.layerX, event.layerY);
+}
 </script>
 
 <style lang="scss">
@@ -82,19 +107,19 @@ function requestUpdate() {
 .dir-view {
   summary, li {
     @apply flex flex-nowrap items-center;
-    @apply list-none whitespace-nowrap overflow-ellipsis select-none;
-    @apply cursor-pointer;
+    @apply list-none whitespace-nowrap overflow-ellipsis;
+    @apply select-none cursor-pointer;
 
     > .name {
       @apply mr-auto;
     }
 
     &:hover {
-      background-color: darken($sidebar-surface-color, 1%)
+      background-color: darken($surface-color, 1%)
     }
 
-    &:focus-visible {
-      background-color: mix($sidebar-drawer-surface-color, $brand-primary, 50%);
+    &:focus {
+      background-color: $accent-background-color;
       outline: 1px solid lighten($brand-primary, 10%);
     }
 
@@ -120,7 +145,7 @@ function requestUpdate() {
       width: 1em;
       height: 1em;
       padding-top: 0.2em;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='#{encodecolor($sidebar-drawer-text-color)}' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' /%3E%3C/svg%3E") no-repeat;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='#{encodecolor($text-color-elevated)}' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' /%3E%3C/svg%3E") no-repeat;
 
       transition: 50ms ease-in rotate;
     }

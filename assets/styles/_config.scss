@@ -6,14 +6,18 @@ $brand-danger: #FC458C;
 
 $navbar-height: 48px;
 
-$body-background-color: #222;
-$body-text-color: #888;
+$background-color: #222;
+$text-color: #AAA;
+$text-color-secondary: #777;
+
+$background-color-elevated: lighten($background-color, 2%);
+$text-color-elevated: lighten($text-color, 15%);
+
+$accent-background-color: mix($background-color-elevated, $brand-primary, 50%);
+
+$surface-color: lighten($background-color, 7%);
+$surface-text-color: #888;
 
 $sidebar-width: 60px;
 $sidebar-icon-size: 28px;
-
 $sidebar-drawer-width: 320px;
-$sidebar-text-color: #888;
-$sidebar-surface-color: #333;
-$sidebar-drawer-text-color: lighten($sidebar-text-color, 20%);
-$sidebar-drawer-surface-color: darken($sidebar-surface-color, 5%);

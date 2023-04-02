@@ -7,7 +7,7 @@ export default defineNuxtModule({
 
     addWebpackPlugin(new MonacoEditorWebpackPlugin({
       languages: ['python', 'json', 'markdown', 'cpp', 'rust'],
-      features: ['quickCommand', 'find', 'folding'],
+      features: ['quickCommand', 'find', 'folding', 'smartSelect'],
     }));
 
     extendWebpackConfig((config) => {

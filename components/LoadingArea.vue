@@ -10,7 +10,7 @@
 @import '~/assets/styles/config';
 
 .loading-area {
-  background-color: $body-background-color;
-  color: $body-text-color;
+  background-color: $background-color;
+  color: $text-color;
 }
 </style>
