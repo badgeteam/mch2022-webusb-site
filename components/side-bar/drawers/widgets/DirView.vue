@@ -2,7 +2,7 @@
   <details class="dir-view" @toggle="onToggle">
 
     <summary :class="{ 'error': loadError }" tabindex="0"
-      @contextmenu.prevent="openContextMenu"
+      @contextmenu.prevent="$event => openContextMenu($event, props.dirNode)"
     >
       <span class="name">{{ props.displayName ?? props.dirNode.name }}</span>
 
@@ -19,7 +19,7 @@
     />
 
     <li v-for="file in files" tabindex="0"
-      @contextmenu.prevent="openContextMenu"
+      @contextmenu.prevent="$event => openContextMenu($event, file)"
       @dblclick="() => $eventBus.emit('file:open', file.path)"
     >
       <span class="name">{{ file.name }}</span>
@@ -35,8 +35,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { DirNode, FileNode } from '~/plugins/badgeUSB.client';
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline';
-import { DirNode, FileNode } from '../Files.vue';
 
 const { $connected, $eventBus } = useNuxtApp();
 
@@ -79,14 +79,30 @@ function requestUpdate() {
   }
 }
 
-const contextMenu: Ref<{
+let contextMenu: Ref<{
   items: { text: string, callback: () => void }[][],
   origin: {x: number, y: number}
 } | null> = ref(null);
 
-function openContextMenu(event: PointerEvent | MouseEvent) {
+function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileNode) {
   /* @ts-ignore */
-  console.debug('x,y:', event.layerX, event.layerY);
+  console.debug('right click at (x,y):', event.layerX, event.layerY);
+
+  contextMenu.value = {
+    items: [[
+      {
+        text: 'Delete',
+        callback() {
+          if (!confirm(`Are you sure you want to delete ${node.name}?`)) return;
+          $eventBus.emit('file:delete', node);
+        },
+      },
+    ]],
+    origin: {
+      /* @ts-ignore */
+      x: event.layerX, y: event.layerY
+    }
+  }
 }
 </script>
 
@@ -105,17 +121,17 @@ function openContextMenu(event: PointerEvent | MouseEvent) {
 }
 
 .dir-view {
-  summary, li {
+  summary, > li {
     @apply flex flex-nowrap items-center;
-    @apply list-none whitespace-nowrap overflow-ellipsis;
+    @apply list-none whitespace-nowrap;
     @apply select-none cursor-pointer;
 
     > .name {
-      @apply mr-auto;
+      @apply mr-auto min-w-0 overflow-ellipsis overflow-hidden;
     }
 
     &:hover {
-      background-color: darken($surface-color, 1%)
+      background-color: darken($surface-color, 1%);
     }
 
     &:focus {
@@ -139,14 +155,10 @@ function openContextMenu(event: PointerEvent | MouseEvent) {
   summary {
     // custom marker
     &::before {
-      @apply mr-2 inline-block align-middle;
+      @apply mr-2 w-4 h-4 flex-none inline-block align-middle;
+
       content: '';
-
-      width: 1em;
-      height: 1em;
-      padding-top: 0.2em;
       background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='#{encodecolor($text-color-elevated)}' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' /%3E%3C/svg%3E") no-repeat;
-
       transition: 50ms ease-in rotate;
     }
   }
@@ -160,7 +172,7 @@ function openContextMenu(event: PointerEvent | MouseEvent) {
     @apply pl-4;
   }
 
-  li {
+  > li {
     @apply ml-5;
   }
 }

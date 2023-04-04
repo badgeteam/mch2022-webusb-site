@@ -1,6 +1,6 @@
 <template>
-  <div class="context-menu" :style="position"
-  @focusout="() => emit('done')"
+  <div class="context-menu" :style="position" tabindex="1"
+    v-autofocus @focusout="() => emit('done')"
   >
     <div class="group" v-for="group in items">
       <li v-for="item in group" @click="() => handleClick(item.callback)"
@@ -32,8 +32,8 @@ const emit = defineEmits<{
 }>();
 
 function handleClick(callback: () => void) {
-  callback();
   emit('done');
+  callback();
 }
 </script>
 
