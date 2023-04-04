@@ -16,9 +16,9 @@
 .navbar {
   height: $navbar-height;
 
-  background-color: $brand-primary;
+  background-color: $brand-purple;
   font-weight: 600;
-  color: $brand-secondary;
+  color: $brand-yellow;
 
   display: flex;
   flex-wrap: nowrap;
@@ -27,7 +27,7 @@
   .navbar-brand {
     height: 100%;
     width: $sidebar-width;
-    background-color: $brand-secondary;
+    background-color: $brand-yellow;
 
     img {
       height: 100%;
