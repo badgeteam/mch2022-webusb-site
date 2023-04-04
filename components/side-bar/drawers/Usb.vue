@@ -50,14 +50,46 @@
   </div>
 
   <div v-if="$connected">
-    <ul class="list-disc ms-5">
-      <li>TX packets: {{ stats.txPackets }}</li>
-      <li>RX packets: {{ stats.rxPackets }}</li>
-      <li>CRC errors: {{ stats.crcErrors }}</li>
-      <li>Transactions: {{ stats.transactions }}</li>
-      <li>Resync count: {{ stats.timesOutOfSync }}</li>
-      <li>Pending transactions: {{ stats.pendingTransactions }}</li>
-    </ul>
+    <h3>Connection metrics</h3>
+    <table class="stats">
+      <tr><td>TX packets:</td><td>{{ stats.txPackets }}</td></tr>
+      <tr><td>RX packets:</td><td>{{ stats.rxPackets }}</td></tr>
+      <tr><td>Transactions:</td><td>{{ stats.transactions }}</td></tr>
+      <tr><td>CRC errors:</td><td>{{ stats.crcErrors }}</td></tr>
+      <tr><td>Resync count:</td><td>{{ stats.timesOutOfSync }}</td></tr>
+      <tr><td>Pending transactions:</td><td>{{ stats.pendingTransactions }}</td></tr>
+    </table>
+  </div>
+
+  <div v-if="$connected">
+    <h3>Settings</h3>
+    <div class="flex flex-col">
+      <div v-for="{ title, value }, key in settings.switches" class="mt-4 px-4 flex items-center justify-between">
+        <span>{{ title }}</span>
+        <Switch v-model="settings.switches[key].value" :class="[value ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
+          <span class="sr-only">Use setting</span>
+          <span aria-hidden="true" :class="[value ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+        </Switch>
+      </div>
+    </div>
+
+    <div v-if="Object.values(settings.switches).some(sw => sw.value)"
+      class="mt-4 rounded-md bg-blue-200 p-4"
+    >
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <InformationCircleIcon class="h-5 w-5 text-blue-500" aria-hidden="true" />
+        </div>
+        <div class="ml-3">
+          <h4 class="text-sm font-medium text-blue-900">RX/TX data is dumped to console</h4>
+          <div class="mt-2 text-xs text-blue-700">
+            <p>
+              Open DevTools to view the debug log.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div v-if="$connected" class="flex flex-col items-stretch mt-auto">
@@ -93,14 +125,22 @@
   </div>
 </template>
 
-<style lang="scss">
-ol li:not(:first-child) {
-  @apply mt-1;
+<style lang="scss" scoped>
+h3 {
+  @apply text-lg;
+}
+table.stats {
+  @apply border-separate border-spacing-x-4 border-spacing-y-2;
+
+  td:nth-child(2) {
+    @apply text-right;
+  }
 }
 </style>
 
 <script lang="ts" setup>
-import { BadgeUSB } from '@badge.team/badge-webusb/dist/badge-usb';
+import { Switch } from '@headlessui/vue';
+import type { BadgeUSB } from '@badge.team/badge-webusb/dist/badge-usb';
 import { ArrowPathRoundedSquareIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid';
 const { $BadgeAPI, $connected } = useNuxtApp();
@@ -108,21 +148,23 @@ const { $BadgeAPI, $connected } = useNuxtApp();
 const webUsbAvailable = !!navigator.usb;
 const compatLink = "https://developer.mozilla.org/en-US/docs/Web/API/USB#browser_compatibility";
 
-let stats: BadgeUSB['connectionStats'] = reactive({
-  rxPackets: 0,
-  txPackets: 0,
-  crcErrors: 0,
-  transactions: 0,
-  timesOutOfSync: 0,
-  pendingTransactions: 0,
-});
-setInterval(() => {
-  if (!$connected.value) return;
-  Object.assign(stats, $BadgeAPI.badge!.connectionStats);
-}, 200);
-
 let connecting = ref(false);
 $BadgeAPI.onConnect(() => connecting.value = false);
+
+const settings = reactive({
+  switches: {
+    'debug-rx': {
+      title: 'RX debug mode',
+      get value() { return $BadgeAPI.badge?.debug.rx ?? false },
+      set value(v: boolean) { if ($BadgeAPI.badge) $BadgeAPI.badge.debug.rx = v },
+    },
+    'debug-tx': {
+      title: 'TX debug mode',
+      get value() { return $BadgeAPI.badge?.debug.tx ?? false },
+      set value(v: boolean) { if ($BadgeAPI.badge) $BadgeAPI.badge.debug.tx = v },
+    },
+  },
+});
 
 async function connect() {
   if ($connected.value || connecting.value) return null;
@@ -146,5 +188,18 @@ async function reset() {
   if (!$connected.value) return null;
   await $BadgeAPI.badge!.controlReset();
 }
+
+let stats: BadgeUSB['connectionStats'] = reactive({
+  rxPackets: 0,
+  txPackets: 0,
+  crcErrors: 0,
+  transactions: 0,
+  timesOutOfSync: 0,
+  pendingTransactions: 0,
+});
+setInterval(() => {
+  if (!$connected.value) return;
+  Object.assign(stats, $BadgeAPI.badge!.connectionStats);
+}, 200);
 
 </script>

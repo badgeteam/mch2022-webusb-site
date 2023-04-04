@@ -9,7 +9,7 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@badge.team/badge-webusb": "^1.1.0",
+    "@badge.team/badge-webusb": "^1.1.3",
     "@headlessui/vue": "^1.7.12",
     "@heroicons/vue": "^2.0.16",
     "@monaco-editor/loader": "^1.3.2",
