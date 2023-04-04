@@ -30,6 +30,63 @@
   </aside>
 </template>
 
+<script lang="ts" setup>
+import {
+  ArrowsRightLeftIcon,
+  CircleStackIcon,
+  CommandLineIcon,
+  BuildingStorefrontIcon,
+  Cog8ToothIcon,
+} from '@heroicons/vue/24/outline';
+import {
+  FilesDrawer,
+  HatcheryDrawer,
+  USBDrawer
+} from './drawers';
+
+const { $BadgeAPI, $connected } = useNuxtApp();
+
+const drawers: Drawer[] = [
+  { position: 'top', id: 'files',    component: FilesDrawer,    icon: CircleStackIcon,         visible: $connected },
+  { position: 'top', id: 'usb',      component: USBDrawer,      icon: ArrowsRightLeftIcon                          },
+  { position: 'top', id: 'serial',   component: HatcheryDrawer, icon: CommandLineIcon,         visible: $connected },
+  { position: 'top', id: 'hatchery', component: HatcheryDrawer, icon: BuildingStorefrontIcon                       },
+
+  { position: 'bottom', id: 'settings', component: HatcheryDrawer, icon: Cog8ToothIcon                             },
+];
+preloadComponents(drawers.map(d => d.component.name!));
+
+const defaultDrawerIndex = drawers.findIndex(d => d.id == 'usb');
+const connectDrawerIndex = drawers.findIndex(d => d.id == 'files');
+
+const activeDrawerIndex: Ref<number | null> = ref(defaultDrawerIndex);
+const activeDrawer = computed(() => drawerOpen.value ? drawers[activeDrawerIndex.value!] : null);
+const drawerOpen = computed(() => activeDrawerIndex.value !== null);
+
+$BadgeAPI.onConnect(() => activeDrawerIndex.value = connectDrawerIndex);
+$BadgeAPI.onConnectionLost(() => activeDrawerIndex.value = defaultDrawerIndex);
+
+function toggleActiveDrawer(toggleId: string) {
+  if (activeDrawer.value == null || activeDrawer.value.id != toggleId) {
+    let index = drawers.findIndex(d => d.id == toggleId);
+    activeDrawerIndex.value = index;
+  }
+  else {
+    // activeTab == toggleTab -> close tab
+    activeDrawerIndex.value = null;
+  }
+}
+
+type Drawer = {
+  position: 'top' | 'bottom',
+  id: string,
+  icon: Component,
+  component: Component,
+  visible?: ComputedRef<boolean>,
+};
+</script>
+
+
 <style lang="scss">
 @import "~/assets/styles/config";
 
@@ -116,55 +173,3 @@
   }
 }
 </style>
-
-<script lang="ts" setup>
-import {
-  ArrowsRightLeftIcon,
-  CircleStackIcon,
-  CommandLineIcon,
-  BuildingStorefrontIcon,
-  Cog8ToothIcon,
-} from '@heroicons/vue/24/outline';
-import {
-  FilesDrawer,
-  HatcheryDrawer,
-  USBDrawer
-} from './drawers';
-
-const { $BadgeAPI, $connected } = useNuxtApp();
-
-const drawers: Drawer[] = [
-  { position: 'top', id: 'usb',      component: USBDrawer,      icon: ArrowsRightLeftIcon                          },
-  { position: 'top', id: 'files',    component: FilesDrawer,    icon: CircleStackIcon,         visible: $connected },
-  { position: 'top', id: 'serial',   component: HatcheryDrawer, icon: CommandLineIcon,         visible: $connected },
-  { position: 'top', id: 'hatchery', component: HatcheryDrawer, icon: BuildingStorefrontIcon                       },
-
-  { position: 'bottom', id: 'settings', component: HatcheryDrawer, icon: Cog8ToothIcon                             },
-];
-preloadComponents(drawers.map(d => d.component.name!));
-
-const activeDrawerIndex: Ref<number | null> = ref(0);
-const activeDrawer = computed(() => drawerOpen.value ? drawers[activeDrawerIndex.value!] : null);
-const drawerOpen = computed(() => activeDrawerIndex.value !== null);
-
-$BadgeAPI.onConnectionLost(() => activeDrawerIndex.value = 0);
-
-function toggleActiveDrawer(toggleId: string) {
-  if (activeDrawer.value == null || activeDrawer.value.id != toggleId) {
-    let index = drawers.findIndex(d => d.id == toggleId);
-    activeDrawerIndex.value = index;
-  }
-  else {
-    // activeTab == toggleTab -> close tab
-    activeDrawerIndex.value = null;
-  }
-}
-
-type Drawer = {
-  position: 'top' | 'bottom',
-  id: string,
-  icon: Component,
-  component: Component,
-  visible?: ComputedRef<boolean>,
-}
-</script>

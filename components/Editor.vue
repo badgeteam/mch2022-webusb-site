@@ -1,8 +1,9 @@
 <template>
   <div class="editor flex flex-col">
 
-    <div class="editor-tabs w-full h-12 flex" v-if="editor">
-      <div class="editor-tab px-4 py-3" v-for="(tab, i) in tabs"
+    <div class="editor-tabs w-full h-12 flex items-center" v-if="editor">
+      <div v-for="(tab, i) in tabs" class="editor-tab px-4 py-3"
+        :class="{ 'italic': tab.hasUnsavedEdits }"
         :active="i == activeTabIndex ? '' : null"
         @click="() => focusTab(i)"
       >
@@ -11,6 +12,10 @@
           <XMarkIcon/>
         </button>
       </div>
+
+      <button class="h-5 w-5 ml-2" @click="() => openFile('newFile.txt', '')">
+        <PlusIcon/>
+      </button>
     </div>
 
     <div ref="editorContainer" id="editor" class="h-full overflow-hidden">
@@ -21,10 +26,11 @@
 
 <script lang="ts" setup>
 import { markRaw } from 'vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { FileNode } from '~/plugins/badgeUSB.client';
+import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import loader, { Monaco } from '@monaco-editor/loader';
 import { editor, editor as Editor } from 'monaco-editor';
-const { $eventBus, $BadgeAPI } = useNuxtApp();
+const { $BadgeAPI, $eventBus, $files } = useNuxtApp();
 
 const editorContainer: Ref<HTMLDivElement | null> = ref(null);
 const loading = ref(true);
@@ -33,6 +39,7 @@ let editor: Editor.IStandaloneCodeEditor;
 
 type Tab = {
   name: string,
+  file?: FileNode,
   model: editor.ITextModel,
   savedVersionId: number,
   hasUnsavedEdits: boolean,
@@ -49,33 +56,50 @@ onMounted(() => {
       model: null,
     });
 
-    openFile('hello.txt', 'Hello world!\n');
+    // keyboard shortcuts
+    editor.onKeyDown($event => {
+      if ($event.ctrlKey) {
+        switch ($event.browserEvent.key) {
+          case 's': // Ctrl+S
+            saveCurrentTab();
+            $event.preventDefault();
+            break;
+        }
+      }
+    });
 
+    openFile('hello.txt', 'Hello world!\n');
     loading.value = false;
   })
 });
 
-$eventBus.on('file:open', async (path) => {
-  let rawContent = await $BadgeAPI.fileSystem.readFile(path);
-  let content = $BadgeAPI.textDecoder.decode(rawContent);
+$eventBus.on('file:open', openFile);
 
-  openFile(path, content);
-});
 
-function openFile(path: string, content: string) {
+async function openFile(file: FileNode): Promise<void>
+async function openFile(file: string, content?: string): Promise<void>
+async function openFile(file: string | FileNode, content?: string) {
+  const isFileNode = typeof file == 'object';
+
+  const path = isFileNode ? file.path : file;
   let name = path.split('/').pop()!;
   let ext = name.split('.').pop();
 
-  let lang: string | undefined;
-  if (ext && ext in extToLang) lang = extToLang[(ext as keyof typeof extToLang)];
+  content ??= await readFileText(isFileNode ? file.path: file);
 
+  let lang: string | undefined;
   let model: Editor.ITextModel;
+  if (ext && ext in extToLang) {
+    lang = extToLang[(ext as keyof typeof extToLang)];
+  }
   model = monaco.editor.createModel(content, lang ?? ext);
 
   focusTab(tabs.push({
-    name, model: markRaw(model),
+    name,
+    file: isFileNode ? file : undefined,
+    model: markRaw(model),
     savedVersionId: model.getAlternativeVersionId(),
-    get hasUnsavedEdits() { return model.getAlternativeVersionId() == this.savedVersionId },
+    get hasUnsavedEdits() { return !this.file || model.getAlternativeVersionId() != this.savedVersionId },
   }) - 1);
 }
 
@@ -88,12 +112,55 @@ function closeTab(index: number) {
   tabs[index].model.dispose();
   tabs.splice(index, 1);
 
-  if (activeTabIndex.value == tabs.length) activeTabIndex.value--;
+  if (activeTabIndex.value == tabs.length) focusTab(activeTabIndex.value - 1);
 }
 
 function focusTab(index: number) {
   editor.setModel(tabs[index].model);
   activeTabIndex.value = index;
+}
+
+async function saveCurrentTab() {
+  const tab = tabs[activeTabIndex.value!];
+  const version = tab.model.getAlternativeVersionId();
+  const rawContent = $BadgeAPI.textEncoder.encode(tab.model.getValue());
+
+  let newFile = !tab.file;
+  let path: string;
+  if (tab.file) {
+    path = tab.file.path;
+  } else {
+    path = prompt(
+      'Where do you want to save this file?',
+      '/internal/myFile.txt',
+    ) ?? '';
+    if (path == '') return;
+    if (
+      await $BadgeAPI.fileSystem.exists(path) &&
+      !confirm(`The file ${path} already exists, do you want to overwrite it?`)
+    ) return;
+  }
+
+  console.debug('writing file', path, rawContent);
+  await $BadgeAPI.fileSystem.writeFile(path, rawContent.buffer);
+  tab.savedVersionId = version;
+
+  if (newFile) {
+    const file = await $files.getNode(path);
+    if (!file || file.type == 'dir') {
+      console.debug('File path:', path);
+      console.debug('Directory:', $files.directory);
+      throw new Error('No node for created file');
+    }
+    tab.file = file;
+    tab.name = file.name;
+    $eventBus.emit('file:created', file);
+  }
+}
+
+async function readFileText(path: string): Promise<string> {
+  let rawContent = await $BadgeAPI.fileSystem.readFile(path);
+  return $BadgeAPI.textDecoder.decode(rawContent);
 }
 
 const extToLang = {

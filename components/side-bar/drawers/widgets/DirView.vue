@@ -1,5 +1,5 @@
 <template>
-  <details class="dir-view" @toggle="onToggle">
+  <details class="dir-view" @toggle="onToggle" :open="open || root">
 
     <summary :class="{ 'error': loadError }" tabindex="0"
       @contextmenu.prevent="$event => openContextMenu($event, props.dirNode)"
@@ -14,13 +14,13 @@
       </button>
     </summary>
 
-    <DirView v-for="dir in dirs" :dirNode="dir"
+    <DirView v-for="dir in dirs" :dirNode="dir" :open="root"
       @loadDirRequest="(dir, cb) => emit('loadDirRequest', dir, cb)"
     />
 
     <li v-for="file in files" tabindex="0"
       @contextmenu.prevent="$event => openContextMenu($event, file)"
-      @dblclick="() => $eventBus.emit('file:open', file.path)"
+      @dblclick="() => $eventBus.emit('file:open', file)"
     >
       <span class="name">{{ file.name }}</span>
     </li>
@@ -46,10 +46,8 @@ const props = defineProps({
     type: Object as PropType<DirNode>,
     required: true,
   },
-  dummy: {
-    type: Boolean,
-    default: false,
-  }
+  root: Boolean,
+  open: Boolean,
 });
 
 let loading = ref(false);
@@ -69,12 +67,13 @@ function onToggle($event: any) {
 }
 
 function requestUpdate() {
-  if ($connected && !loading.value && !props.dummy) {
+  if ($connected && !loading.value && !props.root) {
     loading.value = true;
 
     emit('loadDirRequest', props.dirNode, (err) => {
       loading.value = false;
       loadError.value = !!err;
+      if (!!err) console.error('Error while updating dir', props.dirNode.path, err);
     });
   }
 }

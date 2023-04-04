@@ -23,7 +23,7 @@
         </div>
       </div>
     </div>
-    <button class="btn-block-primary with-icon mt-3" @click="connect">
+    <button class="btn-block-primary with-icon mt-3" @click="connect" :disabled="connecting">
       <ArrowPathRoundedSquareIcon/>
       Connect
     </button>
@@ -128,12 +128,12 @@ async function connect() {
   if ($connected.value || connecting.value) return null;
   connecting.value = true;
 
-  let success = await $BadgeAPI.connect().catch(err => {
+  await $BadgeAPI.connect()
+  .then(() => console.debug('BadgeAPI', $BadgeAPI))
+  .catch(err => {
     console.warn('Connecting to badge failed; did user cancel?', err);
-    return false;
+    connecting.value = false;
   });
-
-  if (success) console.debug('BadgeAPI', $BadgeAPI);
 }
 
 async function disconnect() {

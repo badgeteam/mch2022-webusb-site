@@ -1,7 +1,7 @@
 <template>
   <h2>Badge Filesystems</h2>
   <div v-if="$connected">
-    <DirView :dirNode="treeRoot" displayName="/" :dummy="true" open
+    <DirView :dirNode="treeRoot" displayName="/" root
       @loadDirRequest="(dir, cb) => handleDirRequest(dir, cb)"
     />
   </div>
@@ -66,5 +66,10 @@ $eventBus.on('file:delete', file => {
     }
     $files.updateDir(file.parent!);
   });
+});
+
+// TODO: focus on created file
+$eventBus.on('file:created', node => {
+  $files.updateDir(node.parent!);
 });
 </script>
