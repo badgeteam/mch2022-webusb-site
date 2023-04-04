@@ -6,6 +6,7 @@
         :class="{ 'italic': tab.hasUnsavedEdits }"
         :active="i == activeTabIndex ? '' : null"
         @click="() => focusTab(i)"
+        @auxclick="$event => { if ($event.button == 1) /* middle click */ closeTab(i) }"
       >
         {{ tab.name }}
         <button class="close w-4 h-4 ml-1 leading-tight rounded-sm text-red-500" @click="() => closeTab(i)">
