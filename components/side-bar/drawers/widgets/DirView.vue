@@ -120,6 +120,19 @@ function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileN
 }
 
 .dir-view {
+  @apply text-sm;
+
+  .dir-view, > li {
+    @apply border-l;
+    border-color: $background-color-elevated;
+    transition: 100ms ease-in border-color;
+  }
+  &:hover {
+    .dir-view, .dir-view > li {
+      border-color: lighten($background-color-elevated, 10%);
+    }
+  }
+
   summary, > li {
     @apply flex flex-nowrap items-center;
     @apply list-none whitespace-nowrap;
@@ -130,49 +143,41 @@ function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileN
     }
 
     &:hover {
-      background-color: darken($surface-color, 1%);
+      background-color: lighten($background-color-elevated, 4%);
     }
 
     &:focus {
       background-color: $accent-background-color;
       outline: 1px solid lighten($brand-primary, 10%);
     }
-
-    // &.error {
-    //   &::after {
-    //     @apply mr-3 bg-red-500;
-    //     $size: 0.5em;
-
-    //     content: '';
-    //     width: $size;
-    //     height: $size;
-    //     border-radius: calc($size / 2);
-    //   }
-    // }
   }
 
   summary {
     // custom marker
     &::before {
-      @apply mr-2 w-4 h-4 flex-none inline-block align-middle;
+      @apply w-4 h-4 mr-1 mt-0.5 flex-none;
 
       content: '';
       background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='#{encodecolor($text-color-elevated)}' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M8.25 4.5l7.5 7.5-7.5 7.5' /%3E%3C/svg%3E") no-repeat;
       transition: 50ms ease-in rotate;
     }
-  }
 
+    &:focus {
+      ~ .dir-view, ~ li {
+        border-color: lighten($background-color-elevated, 25%);
+      }
+    }
+  }
   &[open] > summary::before {
     rotate: 90deg;
   }
 
   // indent dir contents
   > :not(summary) {
-    @apply pl-4;
+    @apply ml-1.5 pl-2.5;
   }
-
   > li {
-    @apply ml-5;
+    @apply pl-4;
   }
 }
 </style>

@@ -80,7 +80,9 @@ export default defineNuxtPlugin((nuxtApp) => {
 
           return badgeAPI.fileSystem.list(dir.path)
           .then(nodes => Promise.all(
-            nodes.map(async node => {
+            nodes
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(async node => {
               if (node.type == 'file') {
                 const fileNode: FileNode = {
                   ...node as FileNode,
