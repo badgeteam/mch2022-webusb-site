@@ -1,6 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  // css: ['~/assets/styles/main.scss'],
+  app: {
+    head: {
+      title: 'Badge.team IDE',
+    },
+  },
+
   postcss: {
     plugins: {
       tailwindcss: {},
