@@ -31,7 +31,7 @@ import { FileNode } from '~/plugins/badge-usb.client.js';
 import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import loader, { Monaco } from '@monaco-editor/loader';
 import { editor, editor as Editor } from 'monaco-editor';
-const { $BadgeAPI, $eventBus, $files } = useNuxtApp();
+const { $BadgeAPI, $connected, $eventBus, $files } = useNuxtApp();
 
 const editorContainer: Ref<HTMLDivElement | null> = ref(null);
 const loading = ref(true);
@@ -86,6 +86,12 @@ async function openFile(file: string | FileNode, content?: string) {
   let name = path.split('/').pop()!;
   let ext = name.split('.').pop();
 
+  let tabIndex = tabs.findIndex(t => t.file?.path == path);
+  if (tabIndex > -1) {
+    focusTab(tabIndex);
+    return;
+  }
+
   content ??= await readFileText(isFileNode ? file.path: file);
 
   let lang: string | undefined;
@@ -122,6 +128,10 @@ function focusTab(index: number) {
 }
 
 async function saveCurrentTab() {
+  if (!$connected.value) {
+    alert('Not connected to a badge, can\'t save!');
+    return;
+  }
   const tab = tabs[activeTabIndex.value!];
   const version = tab.model.getAlternativeVersionId();
   const rawContent = $BadgeAPI.textEncoder.encode(tab.model.getValue());
