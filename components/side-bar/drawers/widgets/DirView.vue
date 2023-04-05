@@ -35,7 +35,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { DirNode, FileNode } from '~/plugins/badgeUSB.client';
+import type { DirNode, FileNode } from '~/plugins/badge-usb.client.js';
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline';
 
 const { $connected, $eventBus } = useNuxtApp();

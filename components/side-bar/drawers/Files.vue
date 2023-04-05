@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { DirNode, FSNode } from '~/plugins/badgeUSB.client';
+import type { DirNode, FSNode } from '~/plugins/badge-usb.client';
 import DirView from './widgets/DirView.vue';
 
 const { $BadgeAPI, $connected, $eventBus, $files } = useNuxtApp();
@@ -69,6 +69,7 @@ $eventBus.on('file:delete', file => {
 });
 
 // TODO: focus on created file
+// FIXME: fix updating file tree when treeRoot is updated externally
 $eventBus.on('file:created', node => {
   $files.updateDir(node.parent!);
 });

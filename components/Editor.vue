@@ -27,7 +27,7 @@
 
 <script lang="ts" setup>
 import { markRaw } from 'vue';
-import { FileNode } from '~/plugins/badgeUSB.client';
+import { FileNode } from '~/plugins/badge-usb.client.js';
 import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import loader, { Monaco } from '@monaco-editor/loader';
 import { editor, editor as Editor } from 'monaco-editor';

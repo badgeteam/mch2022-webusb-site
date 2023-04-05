@@ -1,5 +1,4 @@
-import { FileListing } from '@badge.team/badge-webusb/dist/api/filesystem';
-import { FileNode, FSNode } from '~/plugins/badgeUSB.client';
+import { FileNode, FSNode } from '~/plugins/badge-usb.client';
 import mitt from 'mitt';
 
 type ApplicationEvents = {
