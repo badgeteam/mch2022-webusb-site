@@ -69,7 +69,7 @@ onMounted(() => {
       }
     });
 
-    openFile('hello.txt', 'Hello world!\n');
+    openFile('hello.md', helloWorldText);
     loading.value = false;
   })
 });
@@ -187,6 +187,35 @@ const extToLang = {
   'c': 'cpp',
   'h': 'cpp',
 };
+
+const helloWorldText = `
+# Hello world!
+
+Welcome to this Badge IDE in the making :)
+
+## Getting started
+Start by making sure you have the latest experimental firmware (> v2.0.3)
+installed on your MCH2022 badge. As soon as you have done that, you should be
+able to connect to it and start editing files, including Python apps,
+directly from your browser!
+
+## Monaco Editor
+This built-in Monaco editor is also used in VSCode. Hit F1 to explore the
+available actions and shortcuts.
+In addition, Ctrl+S will save the currently opened file to the badge.
+
+### Supported languages
+Highlighting and basic formatting are currently available for Python, C, C++,
+and Markdown. More advanced language features will follow Soon™️.
+
+## Additional shortcuts
+* Editor
+  * Middle mouse click on tab to close
+  * <key>Ctrl+S</key> to save
+
+* File browser
+  * <key>Del</key>
+`.trimStart();
 </script>
 
 <style lang="scss">
