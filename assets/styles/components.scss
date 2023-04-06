@@ -83,6 +83,17 @@
   }
 }
 
+progress {
+  appearance: none;
+
+  &::-webkit-progress-bar {
+    @apply bg-gray-400 rounded-full;
+  }
+  &::-webkit-progress-value {
+    @apply bg-blue-700 rounded-full;
+  }
+}
+
 .text-link {
   @apply underline underline-offset-2;
 }

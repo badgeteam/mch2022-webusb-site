@@ -1,5 +1,20 @@
 <template>
   <h2>Badge Filesystems</h2>
+  <div>
+    <div v-for="[key, storage] in Object.entries(fsState).filter(([k, s]) => s.size > 0)" class="first:mt-0 mt-2">
+      <div class="flex justify-between items-end">
+        <span class="text-base font-medium text-blue-700 dark:text-white">{{ key }}</span>
+        <span class="text-sm font-medium text-blue-700 dark:text-white">
+          {{ (Number(storage.size - storage.free)/Number(storage.size)*100).toFixed(1) }}%
+        </span>
+      </div>
+      <progress class="w-full h-2.5"
+        :max="Number(storage.size)" :value="Number(storage.size - storage.free)"
+        :title="`${storage.size - storage.free} / ${storage.size} bytes`"
+      >
+      </progress>
+    </div>
+  </div>
   <div v-if="$connected">
     <DirView :dirNode="root" displayName="/" root
       @loadDirRequest="(dir, cb) => handleDirRequest(dir, cb)"
@@ -12,6 +27,8 @@ import type { DirNode } from '~/plugins/badge-usb.client';
 import DirView from './widgets/DirView.vue';
 
 const { $BadgeAPI, $connected, $eventBus, $files } = useNuxtApp();
+
+let fsState: Awaited<ReturnType<typeof $BadgeAPI.fileSystem.state>> | {} = reactive({});
 
 const root: DirNode = reactive({
   type: 'dir',
@@ -41,14 +58,19 @@ root.children.push({
 $files.directory.set('/internal', root.children[0]);
 
 
+$BadgeAPI.onConnect(() => refresh()); // FIXME: should never occur, drawer inaccessible if not connected
+onMounted(refresh);
+
 async function refresh(depth = 3) {
   if (!$connected) return false;
 
   $files.fetchChildren(await $files.getNode('/internal') as DirNode, depth);
+  refreshState();
 }
 
-$BadgeAPI.onConnect(() => refresh()); // FIXME: should never occur, drawer inaccessible if not connected
-onMounted(refresh);
+async function refreshState() {
+  Object.assign(fsState, await $BadgeAPI.fileSystem.state());
+}
 
 
 function handleDirRequest(dir: DirNode, cb: (err?: any) => void) {
@@ -56,7 +78,7 @@ function handleDirRequest(dir: DirNode, cb: (err?: any) => void) {
 }
 
 $eventBus.on('file:created', node => {
-  // TODO: focus on created file
+  refreshState();
 });
 
 $eventBus.on('file:delete', file => {
@@ -69,6 +91,7 @@ $eventBus.on('file:delete', file => {
     }
     $files.updateDir(file.parent!);
     $eventBus.emit('file:deleted', file);
+    refreshState();
   });
 });
 </script>

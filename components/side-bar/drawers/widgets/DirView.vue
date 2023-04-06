@@ -20,6 +20,7 @@
     />
 
     <li v-for="file in files" tabindex="0" :ref="el => { fileRefs.set(file.path, el as HTMLLIElement) }"
+      :title="file.stat ? `size: ${file.stat.size}` : undefined"
       @contextmenu.prevent="$event => openContextMenu($event, file)"
       @dblclick="() => $eventBus.emit('file:open', file)"
       @keydown.delete.stop="() => deleteNode(file)"
@@ -40,7 +41,7 @@
 import type { DirNode, FSNode, FileNode } from '~/plugins/badge-usb.client.js';
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline';
 
-const { $connected, $eventBus } = useNuxtApp();
+const { $connected, $eventBus, $files } = useNuxtApp();
 
 const props = defineProps({
   displayName: String,
@@ -100,15 +101,53 @@ let contextMenu: Ref<{
 
 function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileNode) {
   contextMenu.value = {
-    items: [[
-      {
-        text: 'Delete',
-        callback() {
-          if (!confirm(`Are you sure you want to delete ${node.name}?`)) return;
-          $eventBus.emit('file:delete', node);
+    items: [
+      [
+        {
+          text: 'Delete',
+          callback() {
+            if (!confirm(`Are you sure you want to delete ${node.name}?`)) return;
+            $eventBus.emit('file:delete', node);
+          },
         },
-      },
-    ]],
+        // ...(node.type == 'file' || node.children.some(c => c.type == 'file') ? [
+        //   {
+        //     text: 'Download',
+        //     callback() {
+        //       // download file
+        //     }
+        //   }
+        // ] : [])
+      ],
+      // ...(node.type == 'file' && node.name == 'metadata.json' ? [[
+      //   {
+      //     text: 'Open workspace',
+      //     callback() {
+      //       alert('Opening workspace');
+
+      //     }
+      //   }
+      // ]] : []),
+      ...(node.type == 'dir' && node.parent != undefined ? [[
+        {
+          text: 'Calculate size',
+          async callback() {
+            loading.value = true;
+
+            await $files.calculateDirSize(node)
+            .then(size => {
+              let sizeFmt = size > 1e4 ? `${(size/1e3).toFixed(1)} kB` : `${size} bytes`;
+              alert(`Size of ${node.path}: ${sizeFmt}`);
+            })
+            .catch(err => {
+              let message = typeof err == 'object' && err && err.message ? err.message : err;
+              alert(`Calculating size of ${node.path} failed: ${message}`);
+            })
+            .finally(() => loading.value = false);
+          }
+        }
+      ]] : [])
+    ],
     origin: {
       x: event.x,
       y: event.y,

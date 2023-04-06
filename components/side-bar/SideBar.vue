@@ -164,15 +164,31 @@ type Drawer = {
     }
 
     > * {
-      @apply p-3;
-    }
-    > div {
+      @apply px-3 mt-3 last:mb-3;
+
       &.section {
-        @apply border-y border-gray-700;
+        @apply border-y py-2 border-zinc-700;
+
+        &:first-child, + .section {
+          @apply border-t-0 mt-0;
+        }
+        &:last-child {
+          @apply border-b-0;
+        }
+      }
+
+      &.at-bottom {
+        @apply mt-auto;
       }
     }
+
     h2 {
-      @apply py-0 my-2 text-xl;
+      @apply p-3 text-xl;
+      background-color: lighten($background-color-elevated, 4%);
+
+      &:first-child {
+        @apply mt-0;
+      }
     }
   }
 }

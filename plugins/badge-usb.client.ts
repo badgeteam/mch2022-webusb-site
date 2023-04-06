@@ -31,14 +31,12 @@ export default defineNuxtPlugin((nuxtApp) => {
           let i = segments.length;
           for (; i > 0; i--) {
             let nodePath = segments.slice(0, i).join('/');
-            console.debug('looking for ancestors of', path, 'at', nodePath);
 
             if (this.directory.has(nodePath)) {
               node = this.directory.get(nodePath)!;
               break;
             }
           }
-          console.debug('found nearest ancestor', node.path);
           // climb file tree
           for (; i < segments.length; i++) {
             if (node.path != path && node.type == 'dir') {
@@ -161,6 +159,17 @@ export default defineNuxtPlugin((nuxtApp) => {
             .filter((cn) => cn.type == 'dir')
             .filter((cd) => (cd as DirNode).loaded || loadUnloaded)
             .forEach((cd) => this.updateDir(cd as DirNode, false));
+        },
+
+        async calculateDirSize(dir: DirNode): Promise<number> {
+          await this.updateDir(dir, false);
+
+          let dirTotal = 0;
+          for (let i = 0; i < dir.children.length; i++) {
+            let node = dir.children[i];
+            dirTotal += node.type == 'file' ? (node.stat?.size ?? 0) : await this.calculateDirSize(node);
+          }
+          return dirTotal;
         },
       }
     }

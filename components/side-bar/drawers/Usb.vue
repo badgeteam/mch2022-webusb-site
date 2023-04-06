@@ -38,18 +38,11 @@
         </div>
         <div class="ml-3">
           <h3 class="text-lg font-medium text-green-900">Connected</h3>
-          <!-- <div class="mt-2 text-sm text-green-700">
-            <p class="mb-3">
-              Please make sure your badge has the latest firmware, and be sure
-              to let us know if you have any issues!
-            </p>
-          </div> -->
         </div>
       </div>
     </div>
   </div>
-
-  <div v-if="$connected">
+  <div v-if="$connected" class="section">
     <h3>Connection metrics</h3>
     <table class="stats">
       <tr><td>TX packets:</td><td>{{ stats.txPackets }}</td></tr>
@@ -60,11 +53,10 @@
       <tr><td>Pending transactions:</td><td>{{ stats.pendingTransactions }}</td></tr>
     </table>
   </div>
-
-  <div v-if="$connected">
+  <div v-if="$connected" class="section">
     <h3>Settings</h3>
     <div class="flex flex-col">
-      <div v-for="{ title, value }, key in settings.switches" class="mt-4 px-4 flex items-center justify-between">
+      <div v-for="{ title, value }, key in settings.switches" class="my-2 px-4 flex items-center justify-between">
         <span>{{ title }}</span>
         <Switch v-model="settings.switches[key].value" :class="[value ? 'bg-indigo-600' : 'bg-gray-200', 'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
           <span class="sr-only">Use setting</span>
@@ -72,7 +64,6 @@
         </Switch>
       </div>
     </div>
-
     <div v-if="Object.values(settings.switches).some(sw => sw.value)"
       class="mt-4 rounded-md bg-blue-200 p-4"
     >
@@ -92,7 +83,7 @@
     </div>
   </div>
 
-  <div v-if="$connected" class="flex flex-col items-stretch mt-auto">
+  <div v-if="$connected" class="at-bottom flex flex-col items-stretch">
     <div class="btn-group">
       <button class="btn-danger with-icon w-1/2" @click="disconnect">
         <XMarkIcon/>
