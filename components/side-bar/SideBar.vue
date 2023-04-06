@@ -18,6 +18,8 @@
           >
           <component :is="drawer.icon"></component>
         </button>
+        <!-- <span class="block my-1">{{ meta.version }}</span> -->
+        <NuxtLink class="block my-1 text-sm" :to="meta.repoUrl.replace(/(\.git)?$/, `/tree/${meta.ref}`)" target="_blank">{{ meta.ref }}</NuxtLink>
       </div>
     </div>
 
@@ -76,6 +78,8 @@ function toggleActiveDrawer(toggleId: string) {
     activeDrawerIndex.value = null;
   }
 }
+
+const meta = pkgInfo;
 
 type Drawer = {
   position: 'top' | 'bottom',

@@ -5,7 +5,12 @@
     </NuxtLink>
 
     <div class="navbar-nav">
-      <NuxtLink class="nav-link" v-for="item in navItems" :to="item.to">{{ item.text }}</NuxtLink>
+      <div>
+        <NuxtLink class="nav-link" v-for="item in navItems[0]" :to="item.to">{{ item.text }}</NuxtLink>
+      </div>
+      <div>
+        <NuxtLink class="nav-link" v-for="item in navItems[1]" :to="item.to" target="_blank">{{ item.text }}</NuxtLink>
+      </div>
     </div>
   </nav>
 </template>
@@ -37,6 +42,7 @@
   }
 
   .navbar-nav {
+    flex: 1;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -64,7 +70,12 @@
 
 <script lang="ts" setup>
 const navItems = [
-  { text: 'Home', to: '/' },
-  { text: 'Hatchery', to: 'https://mch2022.badge.team'}
+  [
+    { text: 'Home', to: '/' },
+    { text: 'Hatchery', to: 'https://mch2022.badge.team' },
+  ],
+  [
+    { text: 'Source', to: pkgInfo.repoUrl },
+  ]
 ]
 </script>
