@@ -44,6 +44,7 @@ function handleClick(callback: () => void) {
   @apply absolute flex flex-col whitespace-nowrap;
   @apply border rounded-md;
   padding: 0 !important;
+  margin: 0 !important;
   color: $text-color-elevated;
   border-color: lighten($background-color-elevated, 15%);
   background-color: $background-color-elevated;

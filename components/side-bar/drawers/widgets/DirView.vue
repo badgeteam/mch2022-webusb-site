@@ -3,6 +3,7 @@
 
     <summary :class="{ 'error': loadError }" tabindex="0"
       @contextmenu.prevent="$event => openContextMenu($event, props.dirNode)"
+      @keydown.delete.stop="() => deleteNode(props.dirNode)"
     >
       <span class="name">{{ props.displayName ?? props.dirNode.name }}</span>
 
@@ -18,9 +19,10 @@
       @loadDirRequest="(dir, cb) => emit('loadDirRequest', dir, cb)"
     />
 
-    <li v-for="file in files" tabindex="0"
+    <li v-for="file in files" tabindex="0" :ref="el => { fileRefs.set(file.path, el as HTMLLIElement) }"
       @contextmenu.prevent="$event => openContextMenu($event, file)"
       @dblclick="() => $eventBus.emit('file:open', file)"
+      @keydown.delete.stop="() => deleteNode(file)"
     >
       <span class="name">{{ file.name }}</span>
     </li>
@@ -35,7 +37,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { DirNode, FileNode } from '~/plugins/badge-usb.client.js';
+import type { DirNode, FSNode, FileNode } from '~/plugins/badge-usb.client.js';
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline';
 
 const { $connected, $eventBus } = useNuxtApp();
@@ -60,9 +62,11 @@ const emit = defineEmits<{
 const dirs = computed(() => props.dirNode.children.filter(n => n.type == 'dir') as DirNode[]);
 const files = computed(() => props.dirNode.children.filter(n => n.type == 'file') as FileNode[]);
 
+const fileRefs = ref(new Map<string, HTMLLIElement>);
+onBeforeUpdate(() => fileRefs.value.clear());
+
 function onToggle($event: any) {
   const opened: boolean = $event.target.open;
-
   if (opened) requestUpdate();
 }
 
@@ -78,15 +82,23 @@ function requestUpdate() {
   }
 }
 
+$eventBus.on('file:created', fsNode => {
+  if (fsNode.parent?.path == props.dirNode.path)
+    fileRefs.value.get(fsNode.path)?.focus();
+});
+
+function deleteNode(node: FSNode) {
+  const nodeType = node.type == 'dir' ? 'folder' : 'file';
+  if (!confirm(`Are you sure you want to delete ${nodeType} '${node.name}'?`)) return;
+  $eventBus.emit('file:delete', node);
+}
+
 let contextMenu: Ref<{
   items: { text: string, callback: () => void }[][],
   origin: {x: number, y: number}
 } | null> = ref(null);
 
 function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileNode) {
-  /* @ts-ignore */
-  console.debug('right click at (x,y):', event.layerX, event.layerY);
-
   contextMenu.value = {
     items: [[
       {
@@ -98,8 +110,8 @@ function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileN
       },
     ]],
     origin: {
-      /* @ts-ignore */
-      x: event.layerX, y: event.layerY
+      x: event.x,
+      y: event.y,
     }
   }
 }
@@ -120,8 +132,6 @@ function openContextMenu(event: PointerEvent | MouseEvent, node: DirNode | FileN
 }
 
 .dir-view {
-  @apply text-sm;
-
   .dir-view, > li {
     @apply border-l;
     border-color: $background-color-elevated;

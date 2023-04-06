@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { DirNode, FSNode } from '~/plugins/badge-usb.client';
+import type { DirNode } from '~/plugins/badge-usb.client';
 import DirView from './widgets/DirView.vue';
 
 const { $BadgeAPI, $connected, $eventBus, $files } = useNuxtApp();
@@ -68,6 +68,7 @@ $eventBus.on('file:delete', file => {
       return;
     }
     $files.updateDir(file.parent!);
+    $eventBus.emit('file:deleted', file);
   });
 });
 </script>

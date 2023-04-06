@@ -4,6 +4,7 @@ import mitt from 'mitt';
 type ApplicationEvents = {
   'file:open': FileNode;
   'file:delete': FSNode;
+  'file:deleted': FSNode;
   'file:created': FSNode;
 };
 

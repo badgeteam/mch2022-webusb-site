@@ -32,7 +32,7 @@ const editor = ref<InstanceType<typeof Editor> | null>(null);
   flex: none;
 }
 .editor {
-  background-color: #0F0;
+  background-color: lighten($background-color, 5%);
   @apply w-full overflow-hidden; // fill available space
 }
 </style>

@@ -3,18 +3,18 @@
 
     <div class="editor-tabs w-full h-12 flex items-center" v-if="editor">
       <div v-for="(tab, i) in tabs" class="editor-tab px-4 py-3"
-        :class="{ 'italic': tab.hasUnsavedEdits }"
+        :class="{ 'italic': tab.hasUnsavedEdits, 'line-through': tab.file?.deleted }"
         :active="i == activeTabIndex ? '' : null"
         @click="() => focusTab(i)"
         @auxclick="$event => { if ($event.button == 1) /* middle click */ closeTab(i) }"
       >
         {{ tab.name }}
-        <button class="close w-4 h-4 ml-1 leading-tight rounded-sm text-red-500" @click="() => closeTab(i)">
+        <button class="close w-4 h-4 ml-1 leading-tight rounded-sm text-red-500" @click.stop="() => closeTab(i)">
           <XMarkIcon/>
         </button>
       </div>
 
-      <button class="h-5 w-5 ml-2" @click="() => openFile('newFile.txt', '')">
+      <button class="h-10 w-10 p-2.5" @click="() => openFile('newFile.txt', '')">
         <PlusIcon/>
       </button>
     </div>
@@ -75,7 +75,10 @@ onMounted(() => {
 });
 
 $eventBus.on('file:open', openFile);
-
+$eventBus.on('file:deleted', deletedFile => {
+  let tab = tabs.find(t => t.file?.path == deletedFile.path);
+  if (tab?.file) tab.file.deleted = true;
+});
 
 async function openFile(file: FileNode): Promise<void>
 async function openFile(file: string, content?: string): Promise<void>
@@ -106,20 +109,23 @@ async function openFile(file: string | FileNode, content?: string) {
     file: isFileNode ? file : undefined,
     model: markRaw(model),
     savedVersionId: model.getAlternativeVersionId(),
-    get hasUnsavedEdits() { return !this.file || model.getAlternativeVersionId() != this.savedVersionId },
+    get hasUnsavedEdits() {
+      return !this.file || this.file.deleted ||
+        model.getAlternativeVersionId() != this.savedVersionId
+    },
   }) - 1);
 }
 
 function closeTab(index: number) {
   if (
-    tabs[index].hasUnsavedEdits
-    && !confirm('This file has unsaved changes, are you sure?')
+    tabs[index].hasUnsavedEdits && !tabs[index].file?.deleted &&
+    !confirm('This file has unsaved changes, are you sure?')
   ) return;
 
   tabs[index].model.dispose();
   tabs.splice(index, 1);
 
-  if (activeTabIndex.value == tabs.length) focusTab(activeTabIndex.value - 1);
+  if (activeTabIndex.value == tabs.length) focusTab(tabs.length - 1);
 }
 
 function focusTab(index: number) {
@@ -136,14 +142,14 @@ async function saveCurrentTab() {
   const version = tab.model.getAlternativeVersionId();
   const rawContent = $BadgeAPI.textEncoder.encode(tab.model.getValue());
 
-  let newFile = !tab.file;
+  let newFile = !tab.file || tab.file.deleted;
   let path: string;
-  if (tab.file) {
+  if (tab.file && !tab.file.deleted) {
     path = tab.file.path;
   } else {
     path = prompt(
       'Where do you want to save this file?',
-      '/internal/myFile.txt',
+      tab.file?.path ?? '/internal/myFile.txt',
     ) ?? '';
     if (path == '') return;
     if (
@@ -164,6 +170,7 @@ async function saveCurrentTab() {
       throw new Error('No node for created file');
     }
     tab.file = file;
+    tab.file.deleted = false;
     tab.name = file.name;
     $eventBus.emit('file:created', file);
   }

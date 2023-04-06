@@ -2,8 +2,8 @@ import { FileListing } from "@badge.team/badge-webusb/dist/api/filesystem";
 import { BadgeAPI } from "@badge.team/badge-webusb";
 
 export type DirListing = FileListing & { type: 'dir' };
-export type FileNode = FileListing & { type: 'file', parent: DirNode };
-export type DirNode = FileListing & { type: 'dir', parent?: DirNode, children: FSNode[], loaded: boolean };
+export type FileNode = FileListing & { type: 'file', parent: DirNode, deleted?: boolean };
+export type DirNode = FileListing & { type: 'dir', parent?: DirNode, children: FSNode[], deleted?: boolean, loaded: boolean };
 export type FSNode = DirNode | FileNode;
 
 export default defineNuxtPlugin((nuxtApp) => {
