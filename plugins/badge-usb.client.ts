@@ -1,9 +1,8 @@
-import { FileListing } from "@badge.team/badge-webusb/dist/api/filesystem";
+import { DirListing, FileListing } from "@badge.team/badge-webusb/dist/api/filesystem";
 import { BadgeAPI } from "@badge.team/badge-webusb";
 
-export type DirListing = FileListing & { type: 'dir' };
-export type FileNode = FileListing & { type: 'file', parent: DirNode, deleted?: boolean };
-export type DirNode = FileListing & { type: 'dir', parent?: DirNode, children: FSNode[], deleted?: boolean, loaded: boolean };
+export type FileNode = FileListing & { parent: DirNode, deleted?: boolean };
+export type DirNode = DirListing & { parent?: DirNode, children: FSNode[], deleted?: boolean, loaded: boolean };
 export type FSNode = DirNode | FileNode;
 
 export default defineNuxtPlugin((nuxtApp) => {
@@ -72,31 +71,47 @@ export default defineNuxtPlugin((nuxtApp) => {
 
         async fetchChildren(
           dir: DirNode,
-          depth: number = Infinity
+          depth: number = Infinity,
+          maxAttempts = 3,
         ): Promise<FSNode[]> {
           if (depth == 0) return Promise.resolve([]);
 
-          return badgeAPI.fileSystem.list(dir.path)
-          .then(nodes => Promise.all(
-            nodes
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map(async node => {
-              if (node.type == 'file') {
-                const fileNode: FileNode = {
-                  ...node as FileNode,
-                  parent: dir,
-                };
-                this.directory.set(fileNode.path, fileNode);
-                return fileNode;
-              }
-              else {
-                const dirNode: DirNode = await this.loadDir(node as DirListing, depth);
-                dirNode.parent = dir;
-                this.directory.set(dirNode.path, dirNode);
-                return dirNode;
-              }
-            })
-          ));
+          let attempts = 0;
+          while (true) {
+            attempts++;
+
+            try {
+              return await badgeAPI.fileSystem.list(dir.path)
+              .then(async children => {
+                children.sort((a, b) => a.type.localeCompare(b.type)*2 + a.name.localeCompare(b.name));
+
+                let childNodes: FSNode[] = [];
+                for (let i = 0; i < children.length; i++) {
+                  let child = children[i];
+
+                  if (child.type == 'file') {
+                    const fileNode: FileNode = {
+                      ...child,
+                      parent: dir,
+                    };
+                    this.directory.set(fileNode.path, fileNode);
+                    childNodes.push(fileNode);
+                  }
+                  else {
+                    const dirNode: DirNode = await this.loadDir(child, depth);
+                    dirNode.parent = dir;
+                    this.directory.set(dirNode.path, dirNode);
+                    childNodes.push(dirNode);
+                  }
+                }
+                return childNodes;
+              });
+
+            } catch (error) {
+              if (attempts >= maxAttempts) throw error;
+              console.debug('FSLS attempt', attempts, 'for', dir.path, 'failed with', error);
+            }
+          }
         },
 
         async updateDir(dir: DirNode, loadUnloaded = true): Promise<void> {
@@ -106,12 +121,11 @@ export default defineNuxtPlugin((nuxtApp) => {
             return;
           }
 
-          dir.children.sort((a, b) => a.name.localeCompare(b.name));
           const cached = dir.children;
+          cached.sort((a, b) => a.name.localeCompare(b.name));
 
-          const current = await this.fetchChildren(dir, 1).then((nodes) =>
-            nodes.sort((a, b) => a.name.localeCompare(b.name))
-          );
+          const current = await this.fetchChildren(dir, 1);
+          current.sort((a, b) => a.name.localeCompare(b.name));
 
           for (let i = 0; i < cached.length || i < current.length; i++) {
             let diff: number;
@@ -155,10 +169,13 @@ export default defineNuxtPlugin((nuxtApp) => {
             }
           }
 
-          dir.children
-            .filter((cn) => cn.type == 'dir')
-            .filter((cd) => (cd as DirNode).loaded || loadUnloaded)
-            .forEach((cd) => this.updateDir(cd as DirNode, false));
+          let childDirs =
+            (dir.children.filter((cn) => cn.type == 'dir') as DirNode[])
+            .filter((cd) => (cd as DirNode).loaded || loadUnloaded);
+
+          for (let i = 0; i < childDirs.length; i++) {
+            await this.updateDir(childDirs[i], false);
+          }
         },
 
         async calculateDirSize(dir: DirNode): Promise<number> {
