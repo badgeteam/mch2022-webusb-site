@@ -5,6 +5,23 @@ export type FileNode = FileListing & { parent: DirNode, deleted?: boolean };
 export type DirNode = DirListing & { parent?: DirNode, children: FSNode[], deleted?: boolean, loaded: boolean };
 export type FSNode = DirNode | FileNode;
 
+export type AppMetadata = {
+  device: string;
+  type: 'esp32' | 'ice40' | 'python';
+  category: string;
+  slug: string;
+  name: string;
+  author: string;
+  license: string;
+  description: string;
+  version: number;
+  files: {
+    name: string;
+    url: string;
+    size: number;
+  }[];
+};
+
 export default defineNuxtPlugin((nuxtApp) => {
   const badgeAPI = reactive(new BadgeAPI());
   return {

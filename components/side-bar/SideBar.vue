@@ -35,12 +35,14 @@
 <script lang="ts" setup>
 import {
   ArrowsRightLeftIcon,
+  BuildingStorefrontIcon,
   CircleStackIcon,
   CommandLineIcon,
-  BuildingStorefrontIcon,
   Cog8ToothIcon,
+  SquaresPlusIcon,
 } from '@heroicons/vue/24/outline';
 import {
+  AppsDrawer,
   FilesDrawer,
   HatcheryDrawer,
   USBDrawer
@@ -50,6 +52,7 @@ const { $BadgeAPI, $connected } = useNuxtApp();
 
 const drawers: Drawer[] = [
   { position: 'top', id: 'files',    component: FilesDrawer,    icon: CircleStackIcon,         visible: $connected },
+  { position: 'top', id: 'apps',     component: AppsDrawer,     icon: SquaresPlusIcon,         visible: $connected },
   { position: 'top', id: 'usb',      component: USBDrawer,      icon: ArrowsRightLeftIcon                          },
   // { position: 'top', id: 'serial',   component: HatcheryDrawer, icon: CommandLineIcon,         visible: $connected },
   // { position: 'top', id: 'hatchery', component: HatcheryDrawer, icon: BuildingStorefrontIcon                       },

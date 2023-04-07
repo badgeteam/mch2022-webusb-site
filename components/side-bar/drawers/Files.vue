@@ -3,14 +3,14 @@
   <div>
     <div v-for="[key, storage] in Object.entries(fsState).filter(([k, s]) => s.size > 0)" class="first:mt-0 mt-2">
       <div class="flex justify-between items-end">
-        <span class="text-base font-medium text-blue-700 dark:text-white">{{ key }}</span>
-        <span class="text-sm font-medium text-blue-700 dark:text-white">
+        <span class="text-base font-medium text-gray-200">{{ key }}</span>
+        <span class="text-sm font-medium text-gray-200">
           {{ (Number(storage.size - storage.free)/Number(storage.size)*100).toFixed(1) }}%
         </span>
       </div>
       <progress class="w-full h-2.5"
         :max="Number(storage.size)" :value="Number(storage.size - storage.free)"
-        :title="`${storage.size - storage.free} / ${storage.size} bytes`"
+        :title="`${(Number(storage.size - storage.free)/1e3).toFixed(0)} / ${(Number(storage.size)/1e3).toFixed(0)} kB`"
       >
       </progress>
     </div>
@@ -28,7 +28,7 @@ import DirView from './widgets/DirView.vue';
 
 const { $BadgeAPI, $connected, $eventBus, $files } = useNuxtApp();
 
-let fsState: Awaited<ReturnType<typeof $BadgeAPI.fileSystem.state>> | {} = reactive({});
+let fsState: Awaited<ReturnType<NonNullable<typeof $BadgeAPI.fileSystem>['state']>> | {} = reactive({});
 
 const root: DirNode = reactive({
   type: 'dir',
@@ -69,7 +69,7 @@ async function refresh(depth = 3) {
 }
 
 async function refreshState() {
-  Object.assign(fsState, await $BadgeAPI.fileSystem.state());
+  Object.assign(fsState, await $BadgeAPI.fileSystem!.state());
 }
 
 
@@ -82,7 +82,8 @@ $eventBus.on('file:created', node => {
 });
 
 $eventBus.on('file:delete', file => {
-  $BadgeAPI.fileSystem.delete(file.path)
+  if (!$connected) return;
+  $BadgeAPI.fileSystem!.delete(file.path)
   .catch(err => console.warn(`failed to delete ${file.path}:`, err, file))
   .then(success => {
     if (!success) {
